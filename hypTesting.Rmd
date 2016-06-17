@@ -1,0 +1,420 @@
+---
+title: "Hypothesis Testing"
+author: "Ahsan Ijaz"
+date: "17/06/2016"
+output:
+  ioslides_presentation:
+    keep_md: yes
+    widescreen: yes
+runtime: shiny
+---
+
+## Hypothesis Testing
+
+- Null Hypothesis (Something that people expect)
+- Alternate Hypothesis (An experiment conducted by you to challenge expectation)
+- Hypothesis type (Z-test, t-test, ANOVA,...)
+- Given values (Mean of population, variance of population,sample values, assumption)
+- Critical Value or p-value (when to reject hypothesis)
+
+## Normal Distribution
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(plyr)
+
+mu01 = 500
+sigma1 = 30
+n1 = 30
+xbar1 = 450
+# dat1 <- data.frame(cond = factor(rep(c("Distribution of Panda Weight"), each=3000)), 
+#                   rating = c(rnorm(3000,mean = mu01,sd = sigma1)))
+# cdat1 <- ddply(dat1, "cond", summarise, rating.mean=mean(rating))
+
+inputPanel(
+  selectInput("sd_breaks", label = "Underlying Population:",
+              choices = c(100, 200, 300, 400), selected = 200),
+  
+  sliderInput("bw_adjust", label = "Mean of alternate hypothesis",
+              min = 0, max = 900, value = 500, step = 20),
+  
+    selectInput("crit_value", label = "P-value:",
+              choices = c(0.005,0.05, 0.1, 0.2), selected =0.05)
+)
+
+renderPlot({
+  set.seed(123)
+  z_value = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks))
+  z_value1 = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks),lower.tail = FALSE)
+  dat1 <- data.frame(cond = factor(rep(c("Distribution"), each=3000)), 
+                  rating = c(rnorm(3000,mean = mu01,sd = as.numeric(input$sd_breaks))))
+cdat1 <- ddply(dat1, "cond", summarise, rating.mean=mean(rating))
+
+ggplot(dat1, aes(x=rating, fill="blue")) + geom_density(alpha=.3) + geom_vline(data=cdat1, aes(xintercept=rating.mean,  colour=cond),linetype="dashed", size=1) + geom_vline(xintercept=input$bw_adjust) +
+  geom_vline(xintercept=z_value,colour="red") +
+  geom_vline(xintercept= z_value1,colour="red") + ggtitle(paste0("Area on left side is ",
+                                                        pnorm(q= as.numeric(input$bw_adjust),mean = mu01,
+                                                                               sd = as.numeric(input$sd_breaks))))
+
+})
+
+```
+
+
+## Normal Distribution
+
+```{r, echo=FALSE}
+
+mu01 = 500
+sigma1 = 30
+n1 = 30
+xbar1 = 450
+# dat1 <- data.frame(cond = factor(rep(c("Distribution of Panda Weight"), each=3000)), 
+#                   rating = c(rnorm(3000,mean = mu01,sd = sigma1)))
+# cdat1 <- ddply(dat1, "cond", summarise, rating.mean=mean(rating))
+
+inputPanel(
+  selectInput("sd_breaks2", label = "Underlying Population:",
+              choices = c(100, 200, 300, 400), selected = 200),
+  
+  sliderInput("bw_adjust2", label = "Mean of alternate hypothesis",
+              min = 0, max = 900, value = 500, step = 20),
+  
+    selectInput("crit_value2", label = "P-value:",
+              choices = c(0.005,0.05, 0.1, 0.2), selected =0.05)
+)
+
+renderPlot({
+  set.seed(123)
+  z_value = qnorm(p = (1-as.numeric(input$crit_value2)),mean = mu01,sd = as.numeric(input$sd_breaks2))
+  z_value1 = qnorm(p = (1-as.numeric(input$crit_value2)),mean = mu01,sd = as.numeric(input$sd_breaks2),lower.tail = FALSE)
+  dat2 <- data.frame(cond = factor(rep(c("Underlying Population","Sample Results"), each=3000)), 
+                  rating = c(rnorm(3000,mean =as.numeric(input$bw_adjust2) ,sd=100),
+                             rnorm(3000,mean = mu01,sd = as.numeric(input$sd_breaks2))))
+cdat2 <- ddply(dat2, "cond", summarise, rating.mean=mean(rating))
+
+ggplot(dat2, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat2, aes(xintercept=rating.mean,  colour=cond),linetype="dashed", size=1) + geom_vline(xintercept=input$bw_adjust2) +
+  geom_vline(xintercept=z_value,colour="red") +
+  geom_vline(xintercept= z_value1,colour="red") + ggtitle(paste0("Area on left side is ",
+                                                        pnorm(q= as.numeric(input$bw_adjust2),mean = mu01,
+                                                                               sd = as.numeric(input$sd_breaks2))))
+
+})
+
+```
+
+
+## Lower tail test (known mean and variance)
+
+Suppose the manufacturer claims that the mean lifetime of a battery is more than <b>500</b> hours. In a sample of <b>30</b> batteries, it was found that they only last <b>450</b> hours on average. Assume the population standard deviation is <b>12</b> hours. At <b>.05</b> significance level, can we reject the claim by the manufacturer? 
+
+## Problem breakdown:
+
+- Null hypothesis: mean is more than 500
+- Alternate hypothesis: Mean is less than 500
+- Hypothesis type: Z-test with lower tail
+- Given values (mean and sd of population, mean of samples, number of samples)
+- Critical value: 0.05
+
+## Variables of Interest:
+
+```{r}
+mu02 = 500    
+sigma2 = 12
+n = 30
+xbar = 450
+z = (xbar-mu02)/(sigma2/sqrt(n))
+z
+```
+
+## Visualization of problem:
+
+```{r,echo = FALSE,fig.align='center'}
+
+inputPanel(
+  selectInput("sd_breaks1", label = "Population standard deviation:",
+              choices = c(12, 50, 100, 200,1000), selected = 12),
+  
+  sliderInput("bw_adjust1", label = "Mean of alternate hypothesis",
+              min = 350, max = 650, value = 450, step = 10)
+)
+
+renderPlot({
+  set.seed(123)
+#  z_value = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks))
+#  z_value1 = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks),lower.tail = FALSE)
+  dat3 <- data.frame(cond = factor(rep(c("Distribution"), each=3000)), 
+                  rating = c(rnorm(3000,mean = mu02,sd = as.numeric(input$sd_breaks1))))
+cdat3 <- ddply(dat3, "cond", summarise, rating.mean=mean(rating))
+p_value = .05
+z2 = (as.numeric(input$bw_adjust1-mu02))/(as.numeric(input$sd_breaks1)/sqrt(n))
+z.alpha = qnorm(p_value,lower.tail=TRUE) ## 
+if(z2 < z.alpha){
+  print("Null hypothesis rejected, The mean time battery life is less than 500")
+  varType = "Null hypothesis rejected"
+}else{
+  print("Cannot reject null hypothesis")
+  varType = "Cannot reject null hypothesis"
+}
+
+ggplot(dat3, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat3, aes(xintercept=rating.mean,  colour=cond),linetype="dashed", size=1) + geom_vline(xintercept=input$bw_adjust1) + 
+  ggtitle(varType)
+
+})
+
+
+# library(plyr)
+# dat <- data.frame(cond = factor(rep(c("Distribution of batteries"), each=3000)), 
+#                   rating = c(rnorm(3000,mean = mu0,sd = sigma)))
+# cdat <- ddply(dat, "cond", summarise, rating.mean=mean(rating))
+# ggplot(dat, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat, aes(xintercept=rating.mean,  colour=cond),
+#                linetype="dashed", size=1) + geom_vline(xintercept=xbar) 
+#+ geom_histogram(aes(y=..density..),binwidth=.5,
+#                                                                                colour="black", fill="white")
+```
+
+## Test Hypothesis (lower tail):
+
+```{r}
+
+p_value = .05
+z.alpha = qnorm(p_value,lower.tail=TRUE) ## 
+if(z < z.alpha){
+  print("Null hypothesis rejected, The mean time battery life is less than 500")
+  varType = "Null hypothesis rejected"
+}else{
+  print("Cannot reject null hypothesis")
+}
+```
+
+## Upper tail test (known mean and variance):
+
+Suppose the food label on a cookie bag states that there is at most <b>2</b> grams of fat in a single cookie. In a sample of <b>35</b> cookies, it is found that the mean amount of saturated fat per cookie is <b>2.1</b> grams. The population standard deviation is <b>0.25</b> grams. At .05 significance level, can we reject the claim on food label?
+
+## Problem breakdown:
+
+- Null hypothesis: mean is less than 2
+- Alternate hypothesis: Mean is greater than 2
+- Hypothesis type: Z-test with upper tail
+- Given values (mean and sd of population, mean of samples, number of samples)
+- Critical value: 0.05
+
+## Exploration of problem:
+
+```{r}
+mu0 = 2
+sigma = 0.25
+n = 35
+xbar = 2.1
+z = (xbar-mu0)/(sigma/sqrt(n))
+z
+```
+
+## Visualization of problem:
+
+```{r,echo = FALSE,fig.align='center'}
+library(plyr)
+dat <- data.frame(cond = factor(rep(c("Distribution of fat"), each=3000)), 
+                  rating = c(rnorm(3000,mean = mu0,sd = sigma)))
+cdat <- ddply(dat, "cond", summarise, rating.mean=mean(rating))
+ggplot(dat, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat, aes(xintercept=rating.mean,  colour=cond),
+               linetype="dashed", size=1) + geom_vline(xintercept=xbar)
+#+ geom_histogram(aes(y=..density..),binwidth=.5,
+#                                                                                colour="black", fill="white")
+```
+
+## Test hypothesis (upper tail): 
+
+```{r}
+p_value = .05
+z.alpha = qnorm(p_value,lower.tail=FALSE)
+if(z > z.alpha){
+  print("Null hypothesis rejected, The food label is incorrect")
+}else{
+  print("The null hypothesis that food label is correct cannot be rejected.")
+}
+```
+
+## Two tail test
+
+Suppose the mean weight of Pandas last year was <b>120</b> kg. In a sample of <b>10</b> Pandas same time this year, the mean penguin weight is <b>114</b> kg. Assume the population standard deviation is <b>5.5</b> kg. At <b>.05</b> significance level, can we reject the null hypothesis that the mean penguin weight does not differ from last year?
+
+
+## Problem breakdown:
+
+- Null hypothesis: mean is equal to 120
+- Alternate hypothesis: Mean is not equal to 120
+- Hypothesis type: Z-test with both tails
+- Given values (mean and sd of population, mean of samples, number of samples)
+- Critical value: 0.05
+
+
+## Exploration of problem:
+
+
+```{r}
+xbar =  114           # sample mean 
+mu03 = 120            # hypothesized value 
+sigma3 = 5.5            # population standard deviation 
+n = 10                 # sample size 
+z = (xbar-mu03)/(sigma3/sqrt(n))
+z
+```
+
+## Visualization of problem:
+
+```{r,echo = FALSE,fig.align='center'}
+inputPanel(
+  selectInput("sd_breaks3", label = "Population standard deviation:",
+              choices = c(5.5, 10, 20, 50,1000), selected = 12),
+  
+  sliderInput("bw_adjust3", label = "Mean of alternate hypothesis",
+              min = 50, max = 200, value = 114, step = 5)
+)
+
+renderPlot({
+  set.seed(123)
+#  z_value = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks))
+#  z_value1 = qnorm(p = (1-as.numeric(input$crit_value)),mean = mu01,sd = as.numeric(input$sd_breaks),lower.tail = FALSE)
+  dat4 <- data.frame(cond = factor(rep(c("Distribution"), each=3000)), 
+                  rating = c(rnorm(3000,mean = mu03,sd = as.numeric(input$sd_breaks3))))
+cdat4 <- ddply(dat4, "cond", summarise, rating.mean=mean(rating))
+p_value = .05
+z3 = (as.numeric(input$bw_adjust3-mu03))/(as.numeric(input$sd_breaks3)/sqrt(n))
+z.alpha = qnorm(p_value,lower.tail=TRUE) ## 
+if(z3 < z.alpha | z3 > -z.half.alpha){
+  print("Null hypothesis rejected, The mean time battery life is less than 500")
+  varType2 = "Null hypothesis rejected"
+}else{
+  print("Cannot reject null hypothesis")
+  varType2 = "Cannot reject null hypothesis"
+}
+
+ggplot(dat4, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat4, aes(xintercept=rating.mean,  colour=cond),linetype="dashed", size=1) + geom_vline(xintercept=input$bw_adjust3) + 
+  ggtitle(varType2)
+
+})
+# library(plyr)
+# dat <- data.frame(cond = factor(rep(c("Distribution of Panda Weight"), each=3000)), 
+#                   rating = c(rnorm(3000,mean = mu0,sd = sigma)))
+# cdat <- ddply(dat, "cond", summarise, rating.mean=mean(rating))
+# ggplot(dat, aes(x=rating, fill=cond)) + geom_density(alpha=.3) + geom_vline(data=cdat, aes(xintercept=rating.mean,  colour=cond),
+#                linetype="dashed", size=1) + geom_vline(xintercept=xbar)
+#+ geom_histogram(aes(y=..density..),binwidth=.5,
+#                                                                                colour="black", fill="white")
+```
+
+## Test hypothesis (two tail):
+
+```{r}
+alpha = .05
+z.half.alpha = qnorm(alpha/2)
+if(z < z.half.alpha | z > -z.half.alpha){
+  print("Null hypothesis rejected, The weight of Pandas haven't changed")
+}else{
+  print("Cannot reject the null hypothesis.")
+}
+```
+
+# T-distribution:
+
+## When do we need it
+
+- So far we knew the underlying standard deviation of the population. 
+- In case we don't, we need to somehow estimate the standard deviation by looking at our data
+- More samples we have of the data, more confident we are about the normality of distribution 
+
+## T-distribution visualization
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(plyr)
+
+
+inputPanel(
+  
+  sliderInput("dof", label = "Degree of freedom",
+              min = 5, max = 100, value = 10, step = 5)
+)
+
+renderPlot({
+  set.seed(123)
+  dat3 <- data.frame(cond = factor(rep(c("Normal Distribution","T-distribution"), each=10000)), 
+                  rating = c(rnorm(10000),rt(n =10000,df = as.numeric(input$dof))))
+
+ggplot(dat3, aes(x=rating,colour = cond)) + geom_density(alpha=.3) 
+})
+
+```
+
+## One sample T-test:
+
+An outbreak of Dengue was attributed to water collected in drums at a
+certain factory. Scientists measured the level of Dengue in 9 randomly sampled
+water drums. The levels were:
+0.593 0.142 0.329 0.691 0.231 0.793 0.519 0.392 0.418
+Is there evidence that the mean level of virus in the drums is greater than 0.3?
+
+## Problem breakdown:
+
+- Null hypothesis: mean is equal to 0.3
+- Alternate hypothesis: Mean is greater than 0.3
+- Hypothesis type: t-test one sample
+- Given values (values of samples collected)
+- Critical value: 0.05
+
+## Hypothesis Test (one sample)
+
+```{r}
+x = c(0.593, 0.142, 0.329, 0.691, 0.231, 0.793, 0.519, 0.392, 0.418)
+t.test(x, alternative="greater", mu=0.3)
+```
+
+## Hypothesis Test (two samples)
+
+6 subjects were given a drug (treatment group) and an additional 6 subjects a
+placebo (control group). Their reaction time to a stimulus was measured (in ms). We
+want to perform a two-sample t-test for comparing the means of the treatment and
+control groups.
+
+## Two sample T-test:
+Let muMed be the mean of the population taking medicine and muPlacebo the mean of the untreated
+population. Here the hypothesis of interest can be expressed as:
+- H0 => muMed - MuPlacebo = 0
+- Ha => muMed - MuPlacebo > 0
+- Hypothesis type: t-test two samples
+- Given values (values of samples collected)
+- Critical value: 0.05
+
+```{r}
+Control = c(91, 87, 99, 77, 88, 91)
+Treat = c(101, 110, 103, 93, 99, 104)
+t.test(Control,Treat,alternative="greater", var.equal=TRUE)
+```
+
+## Hypothesis test (paired)
+A study was performed to test whether cars get better mileage on premium gas than
+on regular gas. Each of 10 cars was first filled with either regular or premium gas,
+and the mileage for that tank was recorded. The mileage was
+recorded again for the same cars using the other kind of gasoline. We need to use a paired ttest
+to determine whether cars get significantly better mileage with premium gas.
+
+
+## Two sample T-test:
+
+- H0 => Premium is similar to regular gas for mileage
+- Ha => Premium > Mileage
+- Hypothesis type: t-test paired
+- Given values (values of samples collected)
+- Critical value: 0.05
+
+
+## Paired T-tests:
+
+```{r}
+reg = c(16, 20, 21, 22, 23, 22, 27, 25, 27, 28)
+prem = c(19, 22, 24, 24, 25, 25, 26, 26, 28, 32)
+t.test(prem,reg,alternative="greater", paired=TRUE)
+```
+
+
